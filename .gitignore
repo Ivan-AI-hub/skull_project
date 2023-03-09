@@ -153,3 +153,4 @@ cython_debug/
 DICOM/
 *.stl
 *.png
+Skull.obj
