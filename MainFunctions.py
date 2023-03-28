@@ -5,6 +5,7 @@ import skimage
 import matplotlib.pyplot as plt
 from stl import mesh
 from skimage import measure
+from sklearn.cluster import KMeans 
 
 def AddImage(path, output_shape):
   ds = dicom.dcmread(path)
@@ -57,18 +58,18 @@ def plt_3d(verts, faces, filename = 'skull.stl'):
     
     cube.save(filename)
 
-def segmentation(images, shape, n_clusters = 4):
+def segmentation(images, height, width, n_clusters = 4):
     segmentated_imgs = []
-    for image in images[:25]:
-        label = KMeans(n_clusters, n_init='auto').fit_predict(image.reshape(shape,-1))
-        label = label.reshape([i_height,i_width]) 
+    for image in images:
+        label = KMeans(n_clusters, n_init='auto').fit_predict(image.reshape(height*width,-1))
+        label = label.reshape([height, width]) 
         uniq_labels = np.unique(label)
 
         mid_count_labels = [np.count_nonzero(label == k ) for k in uniq_labels]
         sorts_labels = np.argsort(mid_count_labels)
         sorts_labels = np.delete(sorts_labels, 0, 0)
         sorts_labels = np.delete(sorts_labels, len(sorts_labels)-1, 0)
-        max_values = [np.where(label ==l, image, 0).max() for l in sorts_labels]
+        max_values = [np.where(label == l, image, 0).max() for l in sorts_labels]
 
         max_label_indx = np.argmax(max_values)
         mid_label = sorts_labels[max_label_indx]
