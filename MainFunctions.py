@@ -58,46 +58,16 @@ def plt_3d(verts, faces, filename = 'skull.stl'):
     
     cube.save(filename)
 
-def segmentation(images, height, width, n_clusters = 4):
-    segmentated_imgs = []
-    for image in images:
-        min_value = image.min()
-        label = KMeans(n_clusters, n_init='auto').fit_predict(image.reshape(height*width,-1))
-        label = label.reshape([height,width]) 
-        uniq_labels = np.unique(label)
-
-        mid_count_labels = [np.count_nonzero(label == k ) for k in uniq_labels]
-        sorts_labels = np.argsort(mid_count_labels)
-        sorts_labels = np.delete(sorts_labels,0)
-        sorts_labels = np.delete(sorts_labels,len(sorts_labels)-1)
-        max_values = [np.where(label ==l, image, 0).max() for l in sorts_labels]
-
-        max_label_indx = np.argmax(max_values)
-        mid_label = sorts_labels[max_label_indx]
-
-        label_img = np.where(label == mid_label, 1, 0)
-        label_indexes = np.where(label_img == 1)
-
-        first_indx = np.array([np.argmin(label_indexes[0]),np.argmin(label_indexes[1])])
-        last_indx = np.array([np.argmax(label_indexes[0]),np.argmax(label_indexes[1])])
-        first_xy_value = [label_indexes[0][first_indx[0]]-2, label_indexes[1][first_indx[1]]-2]
-        last_xy_value = [label_indexes[0][last_indx[0]]+2, label_indexes[1][last_indx[1]]+2]
-
-        seg_img = np.full((height,width), min_value)
-        for i in range(first_xy_value[0],last_xy_value[0]):
-            for j in range(first_xy_value[1],last_xy_value[1]):
-                seg_img[i,j] = image[i,j]
-
-        label = KMeans(3, n_init='auto').fit_predict(seg_img.reshape(height*width,-1))
-        label = label.reshape([height,width]) 
-        uniq_labels = np.unique(label)
-
-        mid_count_labels = [np.count_nonzero(label == k ) for k in uniq_labels]
-        sorts_labels = np.argsort(mid_count_labels)
-        
-        max_values = [np.where(label == l, image, 0).max() for l in sorts_labels]
-
-        max_label_indx = np.argmax(max_values)
-        mid_label = sorts_labels[max_label_indx]
-        segmentated_imgs.append(np.where(label == mid_label, 1, 0))
-    return np.array(segmentated_imgs)
+def segmentation(images, left_offset, right_offset):
+    width = images.shape[1]
+    height = images.shape[2]
+    x_transforms = np.where(images > 100, 1, 0)
+    x_transforms = np.array(x_transforms, np.float32)
+    for img in x_transforms:
+        for i in range(0, height):
+            for j in range(0, left_offset):
+                img[i,j] = 0
+        for i in range(0, height):
+            for j in range(width - right_offset, width):
+                img[i,j] = 0
+    return np.array(x_transforms)
